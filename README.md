@@ -1,0 +1,2 @@
+# FulusKU
+management keurangan personal
