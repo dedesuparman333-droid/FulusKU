@@ -1153,7 +1153,7 @@
             document.getElementById('dashBalance').innerText = this.formatRupiah(data.balance);
             document.getElementById('dashIncome').innerText = this.formatRupiah(data.income);
             document.getElementById('dashExpense').innerText = this.formatRupiah(data.expense);
-            document.getElementById('dashDebt').innerText = this.formatRupiah(data.debt);
+            document.getElementById('dashDebt').innerText = this.formatRupiah((data.debt || 0) + (data.installmentOutstanding || 0));
             document.getElementById('dashReceivable').innerText = this.formatRupiah(data.receivable);
             document.getElementById('dashTotalInstallmentOutstanding').innerText = 'Total Sisa: ' + this.formatRupiah(data.installmentOutstanding);
         },
