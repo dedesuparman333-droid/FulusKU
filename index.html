@@ -152,6 +152,20 @@
             cursor: pointer;
         }
 
+        /* ════ FULLSCREEN BUTTON ════ */
+        #btn-fullscreen {
+            display: none; /* default hidden */
+        }
+        /* Hanya tampilkan di browser (bukan PWA standalone) */
+        @media not all and (display-mode: standalone) {
+            #btn-fullscreen { display: flex; }
+        }
+        /* Sembunyikan saat betul-betul fullscreen (toolbar sudah tidak kelihatan) */
+        :fullscreen #btn-fullscreen,
+        :-webkit-full-screen #btn-fullscreen {
+            /* tetap tampil agar bisa exit */
+        }
+
         /* ════ OFFLINE BADGE ════ */
         #offline-badge {
             position: fixed;
@@ -247,6 +261,10 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-sm text-gray-500 hidden sm:block mr-2">Halo, <b id="userNameDisplay">Admin</b></span>
+                    <!-- Tombol Fullscreen — hanya muncul di browser, tersembunyi di PWA standalone -->
+                    <button id="btn-fullscreen" onclick="FS.toggle()" class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition items-center" title="Layar Penuh">
+                        <i id="fs-icon" class="bi bi-fullscreen text-lg"></i>
+                    </button>
                     <button onclick="App.openModal('modal-settings')" class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition" title="Pengaturan Tampilan">
                         <i class="bi bi-gear text-lg"></i>
                     </button>
@@ -645,6 +663,70 @@
 
     <script>
     // ════════════════════════════════════════════════════════
+    //  FULLSCREEN CONTROLLER
+    //  Hanya aktif di browser — tidak muncul di PWA standalone
+    // ════════════════════════════════════════════════════════
+    const FS = {
+        isFullscreen: function() {
+            return !!(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement
+            );
+        },
+
+        toggle: function() {
+            if (this.isFullscreen()) {
+                this.exit();
+            } else {
+                this.request();
+            }
+        },
+
+        request: function() {
+            const el = document.documentElement;
+            const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+            if (fn) fn.call(el).catch(err => console.warn('[FS] Gagal masuk fullscreen:', err));
+        },
+
+        exit: function() {
+            const fn = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+            if (fn) fn.call(document);
+        },
+
+        updateIcon: function() {
+            const icon = document.getElementById('fs-icon');
+            const btn  = document.getElementById('btn-fullscreen');
+            if (!icon || !btn) return;
+            if (this.isFullscreen()) {
+                icon.className = 'bi bi-fullscreen-exit text-lg';
+                btn.title = 'Keluar Layar Penuh';
+            } else {
+                icon.className = 'bi bi-fullscreen text-lg';
+                btn.title = 'Layar Penuh';
+            }
+        },
+
+        init: function() {
+            // Update icon saat fullscreen berubah (keyboard Esc, F11, dll)
+            ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+                document.addEventListener(evt, () => this.updateIcon());
+            });
+
+            // Sembunyikan tombol jika sudah di PWA standalone
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                               || window.navigator.standalone === true;
+            if (isStandalone) {
+                const btn = document.getElementById('btn-fullscreen');
+                if (btn) btn.style.display = 'none';
+            }
+        }
+    };
+    </script>
+
+    <script>
+    // ════════════════════════════════════════════════════════
     //  PWA CONTROLLER
     // ════════════════════════════════════════════════════════
     const PWA = {
@@ -706,24 +788,23 @@
             }
 
             // Register Service Worker
+            // ⚠️ PENTING: jangan wrap dalam window.addEventListener('load',...) di sini
+            // karena PWA.init() sudah dipanggil dari window.onload — event 'load' sudah fired!
             if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('./sw.js')
-                        .then(reg => {
-                            console.log('[SW] Registered, scope:', reg.scope);
-                            // Cek update SW
-                            reg.addEventListener('updatefound', () => {
-                                const newWorker = reg.installing;
-                                newWorker.addEventListener('statechange', () => {
-                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                        // Ada versi baru — opsional: tampilkan notif update
-                                        console.log('[SW] Update tersedia.');
-                                    }
-                                });
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => {
+                        console.log('[SW] Registered, scope:', reg.scope);
+                        // Cek update SW
+                        reg.addEventListener('updatefound', () => {
+                            const newWorker = reg.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('[SW] Update tersedia.');
+                                }
                             });
-                        })
-                        .catch(err => console.warn('[SW] Registrasi gagal:', err));
-                });
+                        });
+                    })
+                    .catch(err => console.warn('[SW] Registrasi gagal:', err));
             }
         },
 
@@ -985,7 +1066,7 @@
                 document.getElementById('trxDate').valueAsDate = new Date();
                 document.getElementById('instDate').valueAsDate = new Date();
             } catch(e) {
-                this.showToast('Error', 'Gagal memuat data dari database.', 'error');
+                this.showToast('Error', 'Gagal memuat data dari database: ' + e.message, 'error');
             } finally {
                 this.showLoading(false);
             }
@@ -1298,6 +1379,9 @@
         const urlParams = new URLSearchParams(window.location.search);
         const action = urlParams.get('action');
         if (action === 'dashboard') App.switchView('dashboard');
+
+        // Init Fullscreen controller
+        FS.init();
 
         // Init PWA
         PWA.init();

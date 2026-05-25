@@ -9,11 +9,11 @@ const CACHE_NAME = 'fulusku-v1';
 
 // Aset yang di-cache saat install
 const STATIC_ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
   // CDN fonts & icons (opsional — dihapus jika tidak mau cache CDN)
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
   'https://cdn.tailwindcss.com',
@@ -33,7 +33,7 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         // addAll akan gagal jika salah satu URL error — gunakan individual add untuk CDN
-        return cache.addAll(['./index.html', './manifest.json', './icon-192.png', './icon-512.png', './'])
+        return cache.addAll(['/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/'])
           .then(() => {
             // CDN assets: coba cache, tapi jangan gagalkan install jika tidak bisa
             return Promise.allSettled(
@@ -109,7 +109,7 @@ self.addEventListener('fetch', event => {
         .catch(() => {
           // Fallback: jika request adalah navigasi halaman, kembalikan index.html
           if (event.request.mode === 'navigate') {
-            return caches.match('./index.html');
+            return caches.match('/index.html');
           }
           return new Response('Offline', { status: 503 });
         });
