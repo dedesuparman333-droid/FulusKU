@@ -896,9 +896,9 @@
             try {
                 const res = await this.api('loginUser', user, pass);
                 if (res.success) {
-                    this.user = res.data;
+                    this.user = res.data || { id: 'usr_1', username: 'Admin' };
                     localStorage.setItem('fulusku_user', JSON.stringify(this.user)); // Simpan sesi
-                    document.getElementById('userNameDisplay').innerText = this.user.username;
+                    document.getElementById('userNameDisplay').innerText = this.user.username || 'Admin';
                     document.getElementById('loginScreen').classList.remove('active-screen');
                     document.getElementById('loginScreen').classList.add('hidden-screen');
                     setTimeout(() => {
@@ -1269,10 +1269,10 @@
 
         initSession: function() {
             const savedUser = localStorage.getItem('fulusku_user');
-            if (savedUser) {
+            if (savedUser && savedUser !== 'undefined' && savedUser !== 'null') {
                 try {
-                    this.user = JSON.parse(savedUser);
-                    document.getElementById('userNameDisplay').innerText = this.user.username;
+                    this.user = JSON.parse(savedUser) || { id: 'usr_1', username: 'Admin' };
+                    document.getElementById('userNameDisplay').innerText = this.user.username || 'Admin';
                     document.getElementById('loginScreen').style.display = 'none';
                     document.getElementById('loginScreen').classList.remove('active-screen');
                     document.getElementById('loginScreen').classList.add('hidden-screen');
