@@ -36,10 +36,14 @@ function doPost(e) {
       result = addTransaction(args[0]);
     } else if (action === "deleteTransaction") {
       result = deleteTransaction(args[0]);
+    } else if (action === "updateTransaction") {
+      result = updateTransaction(args[0]);
     } else if (action === "addInstallment") {
       result = addInstallment(args[0]);
     } else if (action === "deleteInstallment") {
       result = deleteInstallment(args[0]);
+    } else if (action === "updateInstallment") {
+      result = updateInstallment(args[0]);
     } else if (action === "resetDatabase") {
       result = resetDatabase();
     } else if (action === "setupDatabase") {
@@ -348,6 +352,38 @@ function deleteTransaction(id) {
   }
 }
 
+function updateTransaction(trxData) {
+  try {
+    const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    let sheet = ss.getSheetByName("TRANSACTIONS");
+    if (!sheet) {
+      setupDatabase();
+      sheet = ss.getSheetByName("TRANSACTIONS");
+    }
+
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]).trim() === String(trxData.id).trim()) {
+        const rowNum = i + 1;
+        // Update: date, type, category, amount, description, status
+        sheet.getRange(rowNum, 2).setValue(trxData.date);           // date
+        sheet.getRange(rowNum, 3).setValue(trxData.type);           // type
+        sheet.getRange(rowNum, 4).setValue(trxData.category);       // category
+        sheet.getRange(rowNum, 5).setValue(parseFloat(trxData.amount) || 0);  // amount
+        sheet.getRange(rowNum, 6).setValue(trxData.description || ''); // description
+        sheet.getRange(rowNum, 7).setValue(trxData.status || 'Selesai'); // status
+        // timestamp tidak diubah (biarkan original)
+        
+        return createResponse(true, { id: trxData.id }, "Transaksi berhasil diperbarui.");
+      }
+    }
+    return createResponse(false, null, "ID Transaksi tidak ditemukan.");
+  } catch (error) {
+    return createResponse(false, null, error.message);
+  }
+}
+
 /* ================================================================
    INSTALLMENTS — Cicilan (Total / Setor / Sisa)
    Sheet kolom: id | name | creditor | total_amount | paid_amount | remaining | start_date | status | description | timestamp
@@ -475,6 +511,44 @@ function deleteInstallment(id) {
       if (String(data[i][0]).trim() === String(id).trim()) {
         sheet.deleteRow(i + 1);
         return createResponse(true, null, "Cicilan berhasil dihapus.");
+      }
+    }
+    return createResponse(false, null, "ID Cicilan tidak ditemukan.");
+  } catch (error) {
+    return createResponse(false, null, error.message);
+  }
+}
+
+function updateInstallment(trxData) {
+  try {
+    const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    let sheet = ss.getSheetByName("INSTALLMENTS");
+    if (!sheet) {
+      setupDatabase();
+      sheet = ss.getSheetByName("INSTALLMENTS");
+    }
+
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]).trim() === String(trxData.id).trim()) {
+        const rowNum = i + 1;
+        const total  = parseFloat(trxData.total_amount) || 0;
+        const paid   = parseFloat(trxData.paid_amount) || 0;
+        const remaining = Math.max(0, total - paid);
+        const status = remaining <= 0 ? 'Lunas' : 'Berjalan';
+        
+        // Update: name, creditor, total_amount, paid_amount, remaining, start_date, status, description
+        sheet.getRange(rowNum, 2).setValue(trxData.name || '');              // name
+        sheet.getRange(rowNum, 3).setValue(trxData.creditor || '');          // creditor
+        sheet.getRange(rowNum, 4).setValue(total);                            // total_amount
+        sheet.getRange(rowNum, 5).setValue(paid);                             // paid_amount
+        sheet.getRange(rowNum, 6).setValue(remaining);                        // remaining
+        sheet.getRange(rowNum, 7).setValue(trxData.start_date || new Date()); // start_date
+        sheet.getRange(rowNum, 8).setValue(status);                           // status
+        sheet.getRange(rowNum, 9).setValue(trxData.description || '');       // description
+        
+        return createResponse(true, { id: trxData.id, status: status }, "Cicilan berhasil diperbarui.");
       }
     }
     return createResponse(false, null, "ID Cicilan tidak ditemukan.");
