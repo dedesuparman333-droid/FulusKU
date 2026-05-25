@@ -166,6 +166,25 @@
             /* tetap tampil agar bisa exit */
         }
 
+        /* ════ HEADER MOBILE RESPONSIVE ════ */
+        @media (max-width: 480px) {
+            .header-actions .btn-header-action {
+                padding: 6px;
+            }
+            .header-actions .btn-header-action i {
+                font-size: 15px;
+            }
+            .header-actions {
+                gap: 2px !important;
+            }
+            .app-brand-name {
+                font-size: 16px !important;
+            }
+            .app-brand-icon {
+                font-size: 20px !important;
+            }
+        }
+
         /* ════ OFFLINE BADGE ════ */
         #offline-badge {
             position: fixed;
@@ -191,6 +210,44 @@
         }
         #offline-badge i { font-size: 12px; }
         #offline-badge.show { top: 0; }
+
+        /* ════ UPDATE BANNER ════ */
+        #update-banner {
+            position: fixed;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 32px);
+            max-width: 420px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 0 0 14px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 9998;
+            transition: top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            box-shadow: 0 4px 16px rgba(16,185,129,0.35);
+        }
+        #update-banner i { font-size: 14px; }
+        #update-banner.show { top: 0; }
+        #update-banner button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-left: auto;
+            transition: background 0.2s;
+        }
+        #update-banner button:hover { background: rgba(255,255,255,0.35); }
 
         /* ════ INSTALLED TOAST ════ */
         #installed-toast {
@@ -260,37 +317,37 @@
     <!-- MAIN APPLICATION WORKSPACE -->
     <div id="mainApp" class="hidden-screen transition-all-smooth flex flex-col min-h-screen">
         <header class="bg-white shadow-sm sticky top-0 z-40">
-            <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-                <div class="flex items-center gap-2 text-accent">
-                    <i class="bi bi-cash-coin text-2xl"></i>
-                    <span class="font-bold text-xl text-gray-800">FulusKUpro</span>
+            <div class="max-w-5xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 sm:gap-2 text-accent flex-shrink-0 min-w-0">
+                    <i class="bi bi-cash-coin app-brand-icon text-2xl flex-shrink-0"></i>
+                    <span class="font-bold app-brand-name text-xl text-gray-800 truncate">FulusKUpro</span>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-sm text-gray-500 hidden sm:block mr-2">Halo, <b id="userNameDisplay">Admin</b></span>
+                <div class="header-actions flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                    <span class="text-sm text-gray-500 hidden sm:block mr-1">Halo, <b id="userNameDisplay">Admin</b></span>
                     <!-- Tombol Fullscreen — hanya muncul di browser, tersembunyi di PWA standalone -->
-                    <button id="btn-fullscreen" onclick="FS.toggle()" class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition items-center" title="Layar Penuh">
+                    <button id="btn-fullscreen" onclick="FS.toggle()" class="btn-header-action p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition items-center" title="Layar Penuh">
                         <i id="fs-icon" class="bi bi-fullscreen text-lg"></i>
                     </button>
-                    <button onclick="App.openModal('modal-settings')" class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition" title="Pengaturan Tampilan">
+                    <button onclick="App.openModal('modal-settings')" class="btn-header-action p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition" title="Pengaturan Tampilan">
                         <i class="bi bi-gear text-lg"></i>
                     </button>
-                    <button onclick="App.askResetData()" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition animate-pulse" title="Reset Semua Data">
+                    <button onclick="App.askResetData()" class="btn-header-action p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="Reset Semua Data">
                         <i class="bi bi-arrow-counterclockwise text-lg"></i>
                         <span class="hidden md:inline text-sm font-medium ml-1">Reset</span>
                     </button>
-                    <button onclick="App.logout()" class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition" title="Keluar">
+                    <button onclick="App.logout()" class="btn-header-action p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition" title="Keluar">
                         <i class="bi bi-box-arrow-right text-lg"></i>
                     </button>
                 </div>
             </div>
-            <div class="max-w-5xl mx-auto px-4 flex border-t border-gray-100 overflow-x-auto hide-scrollbar">
-                <button onclick="App.switchView('dashboard')" class="nav-item active px-4 py-3 text-sm font-medium text-gray-500 hover:text-accent whitespace-nowrap flex items-center gap-2" data-target="dashboard">
+            <div class="max-w-5xl mx-auto px-3 sm:px-4 flex border-t border-gray-100 overflow-x-auto hide-scrollbar">
+                <button onclick="App.switchView('dashboard')" class="nav-item active px-3 sm:px-4 py-2.5 sm:py-3 text-sm font-medium text-gray-500 hover:text-accent whitespace-nowrap flex items-center gap-1.5 sm:gap-2" data-target="dashboard">
                     <i class="bi bi-grid-1x2"></i> Dashboard
                 </button>
-                <button onclick="App.switchView('transactions')" class="nav-item px-4 py-3 text-sm font-medium text-gray-500 hover:text-accent whitespace-nowrap flex items-center gap-2" data-target="transactions">
+                <button onclick="App.switchView('transactions')" class="nav-item px-3 sm:px-4 py-2.5 sm:py-3 text-sm font-medium text-gray-500 hover:text-accent whitespace-nowrap flex items-center gap-1.5 sm:gap-2" data-target="transactions">
                     <i class="bi bi-wallet2"></i> Transaksi
                 </button>
-                <button onclick="App.switchView('installments')" class="nav-item px-4 py-3 text-sm font-medium text-gray-500 hover:text-accent whitespace-nowrap flex items-center gap-2" data-target="installments">
+                <button onclick="App.switchView('installments')" class="nav-item px-3 sm:px-4 py-2.5 sm:py-3 text-sm font-medium text-gray-500 hover:text-accent whitespace-nowrap flex items-center gap-1.5 sm:gap-2" data-target="installments">
                     <i class="bi bi-credit-card"></i> Cicilan
                 </button>
             </div>
@@ -664,6 +721,13 @@
         </div>
     </div>
 
+    <!-- Update Banner -->
+    <div id="update-banner">
+        <i class="bi bi-arrow-repeat"></i>
+        <span>Versi terbaru tersedia</span>
+        <button onclick="location.reload()">Muat Ulang</button>
+    </div>
+
     <!-- Installed Toast -->
     <div id="installed-toast">✓ FulusKUpro berhasil diinstall!</div>
 
@@ -806,6 +870,13 @@
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                                     console.log('[SW] Update tersedia.');
+                                    // Tampilkan banner update yang rapi
+                                    const banner = document.getElementById('update-banner');
+                                    if (banner) {
+                                        banner.classList.add('show');
+                                        // Auto-hide setelah 5 detik
+                                        setTimeout(() => banner.classList.remove('show'), 5000);
+                                    }
                                 }
                             });
                         });
