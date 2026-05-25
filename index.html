@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>FulusKUpro - Financial Manager</title>
+
+    <!-- ═══════════════════════════════════════════════
+         PWA META TAGS — wajib ada
+    ════════════════════════════════════════════════ -->
+    <meta name="theme-color" content="#2563eb" id="metaThemeColor">
+    <meta name="description" content="Kelola keuangan pribadi: transaksi, cicilan, dan saldo bersih.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="FulusKU">
+    <link rel="manifest" href="manifest.json">
+    <!-- Apple Touch Icon (pakai icon-192 yang sudah ada) -->
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #1f2937; transition: background-color 0.3s, color 0.3s; }
+        .transition-all-smooth { transition: all 0.3s ease-in-out; }
+        .hidden-screen { opacity: 0; pointer-events: none; position: absolute; z-index: -1; transform: translateY(20px); }
+        .active-screen { opacity: 1; pointer-events: auto; position: relative; z-index: 10; transform: translateY(0); }
+        .nav-item.active { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); }
+        
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: rgba(37, 99, 235, 0.1);
+        }
+
+        .bg-accent { background-color: var(--primary-color) !important; }
+        .hover\:bg-accent-hover:hover { background-color: var(--primary-hover) !important; }
+        .bg-accent-light { background-color: var(--primary-light) !important; }
+        .text-accent { color: var(--primary-color) !important; }
+        .border-accent { border-color: var(--primary-color) !important; }
+        .focus-ring-accent:focus { --tw-ring-color: var(--primary-color) !important; border-color: var(--primary-color) !important; }
+        
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
+        
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast-animate { animation: slideInRight 0.3s ease-out forwards; }
+
+        /* ════ DARK MODE ════ */
+        body.dark { background-color: #0f172a !important; color: #f1f5f9 !important; }
+        body.dark .bg-white { background-color: #1e293b !important; color: #f8fafc !important; }
+        body.dark .bg-gray-50 { background-color: #1e293b !important; border-color: #334155 !important; }
+        body.dark .bg-gray-100 { background-color: #334155 !important; }
+        body.dark .text-gray-900, body.dark .text-gray-800, body.dark .text-gray-700 { color: #f1f5f9 !important; }
+        body.dark .text-gray-600, body.dark .text-gray-500, body.dark .text-gray-400 { color: #94a3b8 !important; }
+        body.dark .border-gray-100, body.dark .border-gray-200, body.dark .border-gray-300 { border-color: #334155 !important; }
+        body.dark input, body.dark select, body.dark textarea { background-color: #0f172a !important; border-color: #334155 !important; color: #f1f5f9 !important; }
+        body.dark .hover\:bg-gray-100:hover { background-color: #334155 !important; }
+        body.dark .modal-overlay { background-color: rgba(15, 23, 42, 0.75); }
+
+        /* ════ PWA INSTALL BANNER ════ */
+        #pwa-banner {
+            position: fixed;
+            bottom: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 32px);
+            max-width: 480px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+            transition: bottom 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid rgba(37,99,235,0.15);
+        }
+        #pwa-banner.show { bottom: 24px; }
+        body.dark #pwa-banner { background: #1e293b; border-color: #334155; }
+        .pwa-banner-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 22px;
+            flex-shrink: 0;
+        }
+        .pwa-banner-text { flex: 1; }
+        .pwa-banner-text strong { display: block; font-size: 13px; font-weight: 700; color: #1f2937; }
+        body.dark .pwa-banner-text strong { color: #f1f5f9; }
+        .pwa-banner-text span { font-size: 11px; color: #6b7280; }
+        body.dark .pwa-banner-text span { color: #94a3b8; }
+        .pwa-btn-install {
+            background: var(--primary-color);
+            color: white; border: none;
+            padding: 8px 14px; border-radius: 8px;
+            font-size: 12px; font-weight: 700;
+            cursor: pointer; white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .pwa-btn-install:hover { background: var(--primary-hover); }
+        .pwa-btn-dismiss {
+            background: none; border: none;
+            color: #9ca3af; cursor: pointer;
+            font-size: 16px; padding: 4px;
+            flex-shrink: 0;
+        }
+
+        /* ════ iOS GUIDE MODAL ════ */
+        #ios-modal {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 9998;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        #ios-modal.show { display: flex; }
+        .ios-box {
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 24px;
+            width: 100%;
+            max-width: 480px;
+        }
+        body.dark .ios-box { background: #1e293b; }
+        .ios-box h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+        .ios-box p { font-size: 13px; color: #6b7280; margin-bottom: 16px; }
+        .ios-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+        .step-num {
+            width: 26px; height: 26px;
+            background: var(--primary-color);
+            color: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700;
+            flex-shrink: 0; margin-top: 1px;
+        }
+        .step-text { font-size: 13px; color: #374151; line-height: 1.5; }
+        body.dark .step-text { color: #cbd5e1; }
+        .btn-close-ios {
+            width: 100%; margin-top: 16px;
+            background: var(--primary-color);
+            color: white; border: none;
+            padding: 12px; border-radius: 10px;
+            font-size: 14px; font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* ════ OFFLINE BADGE ════ */
+        #offline-badge {
+            position: fixed;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ef4444;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 0 0 12px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 9997;
+            transition: top 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        #offline-badge.show { top: 0; }
+
+        /* ════ INSTALLED TOAST ════ */
+        #installed-toast {
+            position: fixed;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 9999;
+            transition: bottom 0.3s ease;
+            white-space: nowrap;
+        }
+        #installed-toast.show { bottom: 80px; }
+
+        /* iOS safe area padding */
+        @supports(padding-bottom: env(safe-area-inset-bottom)) {
+            #pwa-banner.show { bottom: calc(24px + env(safe-area-inset-bottom)); }
+            .ios-box { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- ════ OFFLINE BADGE ════ -->
+    <div id="offline-badge">
+        <i class="bi bi-wifi-off"></i> Tidak ada koneksi — data tidak bisa diperbarui
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="active-screen transition-all-smooth min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center relative">
+            <div class="mb-6 relative">
+                <button onclick="App.openModal('modal-settings')" class="absolute -top-2 -right-2 p-2 text-gray-400 hover:text-accent rounded-lg transition" title="Pengaturan Koneksi">
+                    <i class="bi bi-gear-fill text-lg"></i>
+                </button>
+                <div class="w-16 h-16 bg-blue-100 bg-accent-light text-accent rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900">FulusKUpro</h1>
+                <p class="text-sm text-gray-500 mt-1">Kelola keuangan Anda dengan profesional.</p>
+            </div>
+
+            <div id="loginError" class="hidden mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm text-left"></div>
+
+            <form id="loginForm" class="space-y-4 text-left" onsubmit="event.preventDefault(); App.login();">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <input type="text" id="loginUsername" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus-ring-accent focus:border-accent outline-none transition" placeholder="admin" required autocomplete="username">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="loginPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus-ring-accent focus:border-accent outline-none transition" placeholder="admin123" required autocomplete="current-password">
+                </div>
+                <button type="submit" id="btnLogin" class="w-full bg-accent hover:bg-accent-hover text-white font-semibold py-2.5 rounded-lg transition-colors flex justify-center items-center gap-2 mt-6">
+                    <span id="loginText">Masuk</span>
+                    <i id="loginSpinner" class="bi bi-arrow-repeat animate-spin hidden"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APPLICATION WORKSPACE -->
+    <div id="mainApp" class="hidden-screen transition-all-smooth flex flex-col min-h-screen">
+        <header class="bg-white shadow-sm sticky top-0 z-40">
+            <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-2 text-accent">
+                    <i class="bi bi-cash-coin text-2xl"></i>
+                    <span class="font-bold text-xl hidden sm:block text-gray-800">FulusKUpro</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-500 hidden sm:block mr-2">Halo, <b id="userNameDisplay">Admin</b></span>
+                    <button onclick="App.openModal('modal-settings')" class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition" title="Pengaturan Tampilan">
+                        <i class="bi bi-gear text-lg"></i>
+                    </button>
+                    <button onclick="App.askResetData()" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition animate-pulse" title="Reset Semua Data">
+                        <i class="bi bi-arrow-counterclockwise text-lg"></i>
+                        <span class="hidden md:inline text-sm font-medium ml-1">Reset</span>
+                    </button>
+                    <button onclick="App.logout()" class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition" title="Keluar">
+                        <i class="bi bi-box-arrow-right text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="max-w-5xl mx-auto px-4 flex border-t border-gray-100 overflow-x-auto hide-scrollbar">
+                <button onclick="App.switchView('dashboard')" class="nav-item active px-4 py-3 text-sm font-medium text-gray-500 hover:text-accent whitespace-nowrap flex items-center gap-2" data-target="dashboard">
+                    <i class="bi bi-grid-1x2"></i> Dashboard
+                </button>
+                <button onclick="App.switchView('transactions')" class="nav-item px-4 py-3 text-sm font-medium text-gray-500 hover:text-accent whitespace-nowrap flex items-center gap-2" data-target="transactions">
+                    <i class="bi bi-wallet2"></i> Transaksi
+                </button>
+                <button onclick="App.switchView('installments')" class="nav-item px-4 py-3 text-sm font-medium text-gray-500 hover:text-accent whitespace-nowrap flex items-center gap-2" data-target="installments">
+                    <i class="bi bi-credit-card"></i> Cicilan
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 max-w-5xl mx-auto w-full p-4">
+            
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="view-section space-y-6">
+                <div class="bg-accent rounded-2xl p-6 text-white shadow-lg relative overflow-hidden" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%)">
+                    <div class="absolute top-0 right-0 p-4 opacity-20">
+                        <i class="bi bi-cash-coin text-8xl"></i>
+                    </div>
+                    <div class="relative z-10">
+                        <p class="text-white/80 text-sm font-medium mb-1">Total Saldo Bersih</p>
+                        <h2 class="text-3xl sm:text-4xl font-bold" id="dashBalance">Rp 0</h2>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-2 text-green-600 mb-2">
+                            <i class="bi bi-arrow-down-circle"></i> <span class="text-xs font-semibold uppercase tracking-wider">Pendapatan</span>
+                        </div>
+                        <div class="text-lg font-bold text-gray-800" id="dashIncome">Rp 0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-2 text-red-500 mb-2">
+                            <i class="bi bi-arrow-up-circle"></i> <span class="text-xs font-semibold uppercase tracking-wider">Pengeluaran</span>
+                        </div>
+                        <div class="text-lg font-bold text-gray-800" id="dashExpense">Rp 0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-2 text-orange-500 mb-2">
+                            <i class="bi bi-journal-minus"></i> <span class="text-xs font-semibold uppercase tracking-wider">Total Utang</span>
+                        </div>
+                        <div class="text-lg font-bold text-gray-800" id="dashDebt">Rp 0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-2 text-blue-500 mb-2">
+                            <i class="bi bi-journal-plus"></i> <span class="text-xs font-semibold uppercase tracking-wider">Total Piutang</span>
+                        </div>
+                        <div class="text-lg font-bold text-gray-800" id="dashReceivable">Rp 0</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2"><i class="bi bi-buildings"></i> Sisa Cicilan per Kreditur</h3>
+                        <div class="text-sm font-bold text-red-500" id="dashTotalInstallmentOutstanding">Total Sisa: Rp 0</div>
+                    </div>
+                    <div id="creditorWidgetList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
+                </div>
+            </div>
+
+            <!-- VIEW: TRANSACTIONS -->
+            <div id="view-transactions" class="view-section hidden space-y-4">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-xl font-bold text-gray-800">Riwayat Transaksi</h2>
+                    <button onclick="App.openModal('modal-add-trx')" class="bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm flex gap-2 items-center">
+                        <i class="bi bi-plus-lg"></i> <span class="hidden sm:inline">Tambah Transaksi</span>
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-gray-50 text-gray-600 font-medium border-b">
+                                <tr>
+                                    <th class="px-4 py-3">Tanggal</th>
+                                    <th class="px-4 py-3">Jenis</th>
+                                    <th class="px-4 py-3">Kategori</th>
+                                    <th class="px-4 py-3">Deskripsi</th>
+                                    <th class="px-4 py-3 text-right">Jumlah</th>
+                                    <th class="px-4 py-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trxTableBody" class="divide-y divide-gray-100 text-gray-700"></tbody>
+                        </table>
+                    </div>
+                    <div id="trxEmpty" class="hidden p-8 text-center text-gray-500">Belum ada transaksi.</div>
+                </div>
+            </div>
+
+            <!-- VIEW: INSTALLMENTS -->
+            <div id="view-installments" class="view-section hidden space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+                    <h2 class="text-xl font-bold text-gray-800">Manajemen Cicilan</h2>
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <select id="creditorFilter" onchange="App.filterByCreditor()" class="flex-1 sm:flex-none border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 outline-none">
+                            <option value="all">-- Semua Kreditur --</option>
+                        </select>
+                        <button onclick="App.openModal('modal-add-inst')" class="bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm whitespace-nowrap flex gap-2 items-center">
+                            <i class="bi bi-plus-lg"></i> <span class="hidden sm:inline">Cicilan Baru</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                        <p class="text-blue-600 text-xs font-semibold uppercase mb-1">Total Pinjaman</p>
+                        <h4 class="text-lg font-bold text-blue-900" id="recapTotalAmount">Rp 0</h4>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-xl border border-green-100">
+                        <p class="text-green-600 text-xs font-semibold uppercase mb-1">Sudah Dibayar</p>
+                        <h4 class="text-lg font-bold text-green-900" id="recapPaidAmount">Rp 0</h4>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-xl border border-red-100">
+                        <p class="text-red-500 text-xs font-semibold uppercase mb-1">Sisa Tagihan</p>
+                        <h4 class="text-lg font-bold text-red-900" id="recapRemaining">Rp 0</h4>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-gray-50 text-gray-600 font-medium border-b">
+                                <tr>
+                                    <th class="px-4 py-3">Barang / Nama</th>
+                                    <th class="px-4 py-3">Kreditur</th>
+                                    <th class="px-4 py-3 text-right">Total Cicilan</th>
+                                    <th class="px-4 py-3 text-right">Sisa</th>
+                                    <th class="px-4 py-3 text-center">Status</th>
+                                    <th class="px-4 py-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="instTableBody" class="divide-y divide-gray-100 text-gray-700"></tbody>
+                        </table>
+                    </div>
+                    <div id="instEmpty" class="hidden p-8 text-center text-gray-500">Belum ada data cicilan.</div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL: ADD TRANSACTION -->
+    <div id="modal-add-trx" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="modal-add-trx-content">
+            <div class="px-6 py-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg text-gray-800">Tambah Transaksi</h3>
+                <button onclick="App.closeModal('modal-add-trx')" class="text-gray-400 hover:text-gray-600"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="trxForm" onsubmit="event.preventDefault(); App.submitTransaction();" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                        <input type="date" id="trxDate" class="w-full border-gray-300 rounded-lg p-2 border focus:ring-blue-500 focus:border-blue-500 outline-none focus-ring-accent" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Jenis</label>
+                            <select id="trxType" onchange="App.handleTrxTypeChange()" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent">
+                                <option value="Pendapatan">Pendapatan</option>
+                                <option value="Pengeluaran">Pengeluaran</option>
+                                <option value="Utang">Utang (Menerima)</option>
+                                <option value="Piutang">Piutang (Memberi)</option>
+                                <option value="Cicilan">Bayar Cicilan</option>
+                            </select>
+                        </div>
+                        <div id="trxCategoryWrapper">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                            <input type="text" id="trxCategory" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" placeholder="Gaji, Makanan, dll" required>
+                        </div>
+                    </div>
+                    <div id="trxInstallmentWrapper" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Cicilan</label>
+                        <select id="trxInstallmentId" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent"></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah (Rp)</label>
+                        <input type="number" id="trxAmount" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" min="1" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>
+                        <textarea id="trxDesc" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" rows="2"></textarea>
+                    </div>
+                    <div class="pt-2 flex justify-end gap-2">
+                        <button type="button" onclick="App.closeModal('modal-add-trx')" class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">Batal</button>
+                        <button type="submit" id="btnSubmitTrx" class="px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg font-medium flex items-center gap-2">Simpan <i id="spinTrx" class="bi bi-arrow-repeat animate-spin hidden"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD INSTALLMENT -->
+    <div id="modal-add-inst" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="modal-add-inst-content">
+            <div class="px-6 py-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg text-gray-800">Tambah Cicilan Baru</h3>
+                <button onclick="App.closeModal('modal-add-inst')" class="text-gray-400 hover:text-gray-600"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="instForm" onsubmit="event.preventDefault(); App.submitInstallment();" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Barang / Keperluan</label>
+                        <input type="text" id="instName" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" placeholder="Contoh: Cicilan Motor" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kreditur (Pihak Peminjam)</label>
+                        <input type="text" id="instCreditor" list="existingCreditors" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" placeholder="Contoh: Leasing ABC" required>
+                        <datalist id="existingCreditors"></datalist>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Total Nilai Pinjaman (Rp)</label>
+                        <input type="number" id="instTotal" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" min="1" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
+                        <input type="date" id="instDate" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Catatan Tambahan</label>
+                        <textarea id="instDesc" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" rows="2"></textarea>
+                    </div>
+                    <div class="pt-2 flex justify-end gap-2">
+                        <button type="button" onclick="App.closeModal('modal-add-inst')" class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">Batal</button>
+                        <button type="submit" id="btnSubmitInst" class="px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg font-medium flex items-center gap-2">Simpan <i id="spinInst" class="bi bi-arrow-repeat animate-spin hidden"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SETTINGS -->
+    <div id="modal-settings" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="modal-settings-content">
+            <div class="px-6 py-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg text-gray-800">Pengaturan Tampilan</h3>
+                <button onclick="App.closeModal('modal-settings')" class="text-gray-400 hover:text-gray-600"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Mode Aplikasi</label>
+                    <div class="flex gap-2">
+                        <button onclick="App.setTheme('light')" id="theme-light-btn" class="flex-1 py-3 px-3 border border-gray-200 rounded-xl font-semibold flex justify-center items-center gap-2 transition hover:bg-gray-50">
+                            <i class="bi bi-sun-fill text-yellow-500"></i> Mode Terang
+                        </button>
+                        <button onclick="App.setTheme('dark')" id="theme-dark-btn" class="flex-1 py-3 px-3 border border-gray-200 rounded-xl font-semibold flex justify-center items-center gap-2 transition hover:bg-gray-50">
+                            <i class="bi bi-moon-stars-fill text-indigo-400"></i> Mode Gelap
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Warna Aksen Aplikasi</label>
+                    <div class="grid grid-cols-5 gap-3">
+                        <button onclick="App.applyAccent('blue')" class="w-11 h-11 rounded-full bg-blue-600 mx-auto relative border-4 border-transparent transition hover:scale-110 shadow-sm" id="accent-blue-btn" title="Classic Blue"></button>
+                        <button onclick="App.applyAccent('orange')" class="w-11 h-11 rounded-full bg-orange-500 mx-auto relative border-4 border-transparent transition hover:scale-110 shadow-sm" id="accent-orange-btn" title="Neon Orange"></button>
+                        <button onclick="App.applyAccent('green')" class="w-11 h-11 rounded-full bg-emerald-500 mx-auto relative border-4 border-transparent transition hover:scale-110 shadow-sm" id="accent-green-btn" title="Emerald Green"></button>
+                        <button onclick="App.applyAccent('purple')" class="w-11 h-11 rounded-full bg-purple-600 mx-auto relative border-4 border-transparent transition hover:scale-110 shadow-sm" id="accent-purple-btn" title="Royal Purple"></button>
+                        <button onclick="App.applyAccent('red')" class="w-11 h-11 rounded-full bg-red-600 mx-auto relative border-4 border-transparent transition hover:scale-110 shadow-sm" id="accent-red-btn" title="Crimson Red"></button>
+                    </div>
+                </div>
+
+                <!-- ════ DATABASE CONNECTION SECTION ════ -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Koneksi Database (Google Sheets)</label>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Spreadsheet ID</label>
+                            <input type="text" id="dbSpreadsheetId" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm outline-none focus-ring-accent" placeholder="1aRClSDk_R5_JJiJgS3FAISljUOI3ZACKgJr5R19ckQM">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Google Apps Script Web App URL</label>
+                            <input type="text" id="dbApiUrl" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm outline-none focus-ring-accent" placeholder="https://script.google.com/macros/s/.../exec">
+                        </div>
+                        <button type="button" onclick="App.saveConnectionSettings()" class="w-full py-2.5 bg-accent hover:bg-accent-hover text-white rounded-lg text-sm font-semibold transition flex justify-center items-center gap-2">
+                            <i class="bi bi-cloud-check-fill"></i> Simpan & Hubungkan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ════ PWA INSTALL SECTION ════ -->
+                <div id="pwaInstallSection" class="pt-4 border-t border-gray-100">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Instalasi Aplikasi</label>
+                    <button id="btnInstallFromSettings" onclick="PWA.doInstall()" class="w-full py-3 border border-dashed border-blue-300 rounded-xl font-semibold flex justify-center items-center gap-2 text-blue-600 hover:bg-blue-50 transition hidden">
+                        <i class="bi bi-download"></i> Install FulusKUpro ke Home Screen
+                    </button>
+                    <div id="pwaInstalledLabel" class="hidden text-center text-sm text-green-600 font-semibold py-2">
+                        <i class="bi bi-check-circle-fill"></i> Aplikasi sudah terinstall
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 flex justify-end">
+                <button onclick="App.closeModal('modal-settings')" class="px-5 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg font-semibold transition">Selesai</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: RESET VERIFY -->
+    <div id="modal-reset-verify" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="modal-reset-verify-content">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-red-50">
+                <h3 class="font-bold text-lg text-red-600 flex items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Atur Ulang Semua Data
+                </h3>
+                <button onclick="App.closeModal('modal-reset-verify')" class="text-gray-400 hover:text-gray-600"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-600 font-medium">Apakah Anda benar-benar yakin ingin menghapus <strong>seluruh data transaksi dan cicilan</strong>? Tindakan ini tidak dapat dibatalkan.</p>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Masukkan PIN Keamanan:</label>
+                    <input type="password" id="resetPinInput" class="w-full border-gray-300 rounded-lg p-3 border outline-none text-center font-bold tracking-widest text-lg focus-ring-accent" placeholder="******" maxlength="6">
+                    <p id="resetPinError" class="text-red-500 text-xs font-medium mt-2 hidden">PIN yang Anda masukkan salah!</p>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 flex justify-end gap-2">
+                <button type="button" onclick="App.closeModal('modal-reset-verify')" class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">Batal</button>
+                <button type="button" onclick="App.verifyAndReset()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold">Ya, Reset Sekarang</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CONFIRM -->
+    <div id="modal-confirm" class="fixed inset-0 modal-overlay hidden z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center transform scale-95 opacity-0 transition-all duration-300" id="modal-confirm-content">
+            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <h3 class="font-bold text-lg text-gray-900 mb-2" id="confirmTitle">Konfirmasi</h3>
+            <p class="text-gray-500 text-sm mb-6" id="confirmMessage">Apakah Anda yakin?</p>
+            <div class="flex gap-3 justify-center">
+                <button onclick="App.closeConfirm()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium flex-1">Batal</button>
+                <button id="btnConfirmYes" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex-1">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-[70] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- GLOBAL LOADER -->
+    <div id="globalLoader" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[100] hidden flex-col items-center justify-center">
+        <i class="bi bi-cash-coin text-5xl text-accent animate-bounce"></i>
+        <div class="text-accent font-semibold mt-4 text-lg">Memproses Data...</div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+         PWA COMPONENTS
+    ════════════════════════════════════════════ -->
+
+    <!-- Install Banner (Android/Desktop) -->
+    <div id="pwa-banner">
+        <div class="pwa-banner-icon"><i class="bi bi-cash-coin"></i></div>
+        <div class="pwa-banner-text">
+            <strong>Install FulusKUpro</strong>
+            <span>Akses cepat dari home screen</span>
+        </div>
+        <button class="pwa-btn-install" onclick="PWA.doInstall()">Install</button>
+        <button class="pwa-btn-dismiss" onclick="PWA.dismissBanner()"><i class="bi bi-x"></i></button>
+    </div>
+
+    <!-- iOS Guide Modal -->
+    <div id="ios-modal">
+        <div class="ios-box">
+            <h3>📲 Tambah ke Home Screen</h3>
+            <p>Ikuti langkah berikut untuk install di iPhone / iPad (Safari):</p>
+            <div class="ios-step">
+                <div class="step-num">1</div>
+                <div class="step-text">Tap ikon <strong>Share</strong> (kotak dengan panah ke atas) di toolbar bawah Safari</div>
+            </div>
+            <div class="ios-step">
+                <div class="step-num">2</div>
+                <div class="step-text">Scroll ke bawah, pilih <strong>Add to Home Screen</strong></div>
+            </div>
+            <div class="ios-step">
+                <div class="step-num">3</div>
+                <div class="step-text">Tap <strong>Add</strong> — ikon FulusKUpro langsung muncul di home screen</div>
+            </div>
+            <button class="btn-close-ios" onclick="PWA.closeIosModal()">Mengerti</button>
+        </div>
+    </div>
+
+    <!-- Installed Toast -->
+    <div id="installed-toast">✓ FulusKUpro berhasil diinstall!</div>
+
+    <script>
+    // ════════════════════════════════════════════════════════
+    //  PWA CONTROLLER
+    // ════════════════════════════════════════════════════════
+    const PWA = {
+        deferredPrompt: null,
+
+        init: function() {
+            const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                              || window.navigator.standalone === true;
+            const isDismissed = sessionStorage.getItem('fulusku-pwa-dismissed');
+
+            // Sudah running sebagai PWA
+            if (isStandalone) {
+                this._showInstalledState();
+                return;
+            }
+
+            // Android / Chrome / Edge: tangkap beforeinstallprompt
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                this.deferredPrompt = e;
+                if (!isDismissed) {
+                    setTimeout(() => {
+                        document.getElementById('pwa-banner').classList.add('show');
+                        // Tampilkan tombol install di modal settings juga
+                        const btn = document.getElementById('btnInstallFromSettings');
+                        if (btn) btn.classList.remove('hidden');
+                    }, 2000);
+                }
+            });
+
+            // iOS Safari: panduan manual
+            if (isIos && !isStandalone && !isDismissed) {
+                setTimeout(() => {
+                    document.getElementById('ios-modal').classList.add('show');
+                }, 2000);
+            }
+
+            // Setelah berhasil install
+            window.addEventListener('appinstalled', () => {
+                document.getElementById('pwa-banner').classList.remove('show');
+                this._showInstalledState();
+                const toast = document.getElementById('installed-toast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3500);
+                this.deferredPrompt = null;
+            });
+
+            // Online / Offline detection
+            window.addEventListener('online', () => {
+                document.getElementById('offline-badge').classList.remove('show');
+            });
+            window.addEventListener('offline', () => {
+                document.getElementById('offline-badge').classList.add('show');
+            });
+            // Cek status awal
+            if (!navigator.onLine) {
+                document.getElementById('offline-badge').classList.add('show');
+            }
+
+            // Register Service Worker
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('./sw.js')
+                        .then(reg => {
+                            console.log('[SW] Registered, scope:', reg.scope);
+                            // Cek update SW
+                            reg.addEventListener('updatefound', () => {
+                                const newWorker = reg.installing;
+                                newWorker.addEventListener('statechange', () => {
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        // Ada versi baru — opsional: tampilkan notif update
+                                        console.log('[SW] Update tersedia.');
+                                    }
+                                });
+                            });
+                        })
+                        .catch(err => console.warn('[SW] Registrasi gagal:', err));
+                });
+            }
+        },
+
+        doInstall: function() {
+            if (!this.deferredPrompt) return;
+            document.getElementById('pwa-banner').classList.remove('show');
+            this.deferredPrompt.prompt();
+            this.deferredPrompt.userChoice.then(choice => {
+                if (choice.outcome === 'accepted') {
+                    console.log('[PWA] User accepted install');
+                }
+                this.deferredPrompt = null;
+                const btn = document.getElementById('btnInstallFromSettings');
+                if (btn) btn.classList.add('hidden');
+            });
+        },
+
+        dismissBanner: function() {
+            document.getElementById('pwa-banner').classList.remove('show');
+            sessionStorage.setItem('fulusku-pwa-dismissed', '1');
+        },
+
+        closeIosModal: function() {
+            document.getElementById('ios-modal').classList.remove('show');
+            sessionStorage.setItem('fulusku-pwa-dismissed', '1');
+        },
+
+        _showInstalledState: function() {
+            const label = document.getElementById('pwaInstalledLabel');
+            const btn   = document.getElementById('btnInstallFromSettings');
+            if (label) label.classList.remove('hidden');
+            if (btn)   btn.classList.add('hidden');
+        }
+    };
+
+    // ════════════════════════════════════════════════════════
+    //  APP CONTROLLER (sama persis dengan versi GAS asli)
+    // ════════════════════════════════════════════════════════
+    const App = {
+        user: null,
+        transactions: [],
+        installments: [],
+        
+        formatRupiah: function(number) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number || 0);
+        },
+        
+        formatDate: function(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        },
+
+        api: function(functionName, ...args) {
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                return new Promise((resolve, reject) => {
+                    google.script.run
+                        .withSuccessHandler(res => {
+                            if (res && typeof res === 'object') resolve(res);
+                            else resolve(JSON.parse(res));
+                        })
+                        .withFailureHandler(err => reject(err))
+                        [functionName](...args);
+                });
+            } else {
+                const spreadsheetId = localStorage.getItem('fulusku_spreadsheet_id') || '1aRClSDk_R5_JJiJgS3FAISljUOI3ZACKgJr5R19ckQM';
+                const apiUrl = localStorage.getItem('fulusku_api_url') || '';
+                
+                if (!apiUrl) {
+                    return Promise.reject(new Error('URL API Google Apps Script belum dikonfigurasi! Silakan atur dengan mengklik ikon Roda Gigi (gear) di kanan atas.'));
+                }
+                
+                return fetch(apiUrl, {
+                    method: 'POST',
+                    mode: 'cors',
+                    body: JSON.stringify({
+                        action: functionName,
+                        arguments: args,
+                        spreadsheetId: spreadsheetId
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Respons jaringan tidak oke: ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(res => {
+                    if (res && res.success !== undefined) {
+                        return res;
+                    }
+                    return JSON.parse(res);
+                });
+            }
+        },
+
+        showLoading: function(show) {
+            document.getElementById('globalLoader').style.display = show ? 'flex' : 'none';
+        },
+
+        showToast: function(title, message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const icon = type === 'success'
+                ? '<i class="bi bi-check-circle-fill text-green-500"></i>'
+                : '<i class="bi bi-x-circle-fill text-red-500"></i>';
+            toast.className = `bg-white border-l-4 ${type === 'success' ? 'border-green-500' : 'border-red-500'} shadow-lg rounded p-4 flex gap-3 items-start min-w-[250px] toast-animate pointer-events-auto`;
+            toast.innerHTML = `<div class="text-xl">${icon}</div><div><h4 class="font-bold text-gray-800 text-sm">${title}</h4><p class="text-gray-600 text-xs mt-1">${message}</p></div>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        },
+
+        openModal: function(id) {
+            const modal = document.getElementById(id);
+            const content = document.getElementById(id + '-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+            if (id === 'modal-add-trx') document.getElementById('trxDate').valueAsDate = new Date();
+            if (id === 'modal-add-inst') document.getElementById('instDate').valueAsDate = new Date();
+        },
+
+        closeModal: function(id) {
+            const modal = document.getElementById(id);
+            const content = document.getElementById(id + '-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+            if (id === 'modal-add-trx') { document.getElementById('trxForm').reset(); document.getElementById('trxDate').valueAsDate = new Date(); }
+            if (id === 'modal-add-inst') { document.getElementById('instForm').reset(); document.getElementById('instDate').valueAsDate = new Date(); }
+        },
+
+        openConfirm: function(title, message, onConfirm) {
+            document.getElementById('confirmTitle').innerText = title;
+            document.getElementById('confirmMessage').innerText = message;
+            document.getElementById('btnConfirmYes').onclick = () => { onConfirm(); };
+            this.openModal('modal-confirm');
+        },
+
+        closeConfirm: function() { this.closeModal('modal-confirm'); },
+
+        switchView: function(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'text-accent', 'border-b-2', 'border-accent'));
+            document.getElementById('view-' + viewId).classList.remove('hidden');
+            const btn = document.querySelector(`.nav-item[data-target="${viewId}"]`);
+            if (btn) {
+                btn.classList.add('active', 'text-accent', 'border-b-2', 'border-accent');
+                btn.classList.remove('text-gray-500');
+            }
+        },
+
+        login: async function() {
+            const user = document.getElementById('loginUsername').value.trim();
+            const pass = document.getElementById('loginPassword').value.trim();
+            const errDiv = document.getElementById('loginError');
+            const btnText = document.getElementById('loginText');
+            const spinner = document.getElementById('loginSpinner');
+            errDiv.classList.add('hidden');
+            btnText.innerText = 'Memproses...';
+            spinner.classList.remove('hidden');
+            document.getElementById('btnLogin').disabled = true;
+            try {
+                const res = await this.api('loginUser', user, pass);
+                if (res.success) {
+                    this.user = res.data;
+                    localStorage.setItem('fulusku_user', JSON.stringify(this.user)); // Simpan sesi
+                    document.getElementById('userNameDisplay').innerText = this.user.username;
+                    document.getElementById('loginScreen').classList.remove('active-screen');
+                    document.getElementById('loginScreen').classList.add('hidden-screen');
+                    setTimeout(() => {
+                        document.getElementById('loginScreen').style.display = 'none';
+                        document.getElementById('mainApp').classList.remove('hidden-screen');
+                        document.getElementById('mainApp').classList.add('active-screen');
+                    }, 300);
+                    this.refreshData();
+                } else { throw new Error(res.message); }
+            } catch(e) {
+                errDiv.innerText = e.message;
+                errDiv.classList.remove('hidden');
+            } finally {
+                btnText.innerText = 'Masuk';
+                spinner.classList.add('hidden');
+                document.getElementById('btnLogin').disabled = false;
+            }
+        },
+
+        logout: function() {
+            this.user = null;
+            localStorage.removeItem('fulusku_user'); // Hapus sesi
+            document.getElementById('mainApp').classList.remove('active-screen');
+            document.getElementById('mainApp').classList.add('hidden-screen');
+            setTimeout(() => {
+                const loginScreen = document.getElementById('loginScreen');
+                loginScreen.style.display = 'flex';
+                setTimeout(() => {
+                    loginScreen.classList.remove('hidden-screen');
+                    loginScreen.classList.add('active-screen');
+                }, 50);
+            }, 300);
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        },
+
+        askResetData: function() {
+            document.getElementById('resetPinInput').value = '';
+            document.getElementById('resetPinError').classList.add('hidden');
+            this.openModal('modal-reset-verify');
+        },
+
+        verifyAndReset: function() {
+            const pin = document.getElementById('resetPinInput').value.trim();
+            if (pin === '399339') {
+                this.closeModal('modal-reset-verify');
+                this.resetAllData();
+            } else {
+                document.getElementById('resetPinError').classList.remove('hidden');
+            }
+        },
+
+        resetAllData: async function() {
+            this.showLoading(true);
+            try {
+                const res = await this.api('resetDatabase');
+                if (res.success) {
+                    this.showToast('Berhasil', 'Seluruh data telah di-reset ke nol.');
+                    await this.refreshData();
+                } else throw new Error(res.message);
+            } catch(e) {
+                this.showToast('Gagal', e.message, 'error');
+            } finally {
+                this.showLoading(false);
+            }
+        },
+
+        refreshData: async function() {
+            this.showLoading(true);
+            try {
+                const [dashRes, trxRes, instRes] = await Promise.all([
+                    this.api('getDashboardData'),
+                    this.api('getTransactions'),
+                    this.api('getInstallments')
+                ]);
+                if (dashRes.success) this.renderDashboard(dashRes.data);
+                if (trxRes.success) { this.transactions = trxRes.data; this.renderTransactions(); }
+                if (instRes.success) {
+                    this.installments = instRes.data;
+                    this.populateCreditorFilter();
+                    this.filterByCreditor();
+                    this.renderCreditorWidget();
+                }
+                document.getElementById('trxDate').valueAsDate = new Date();
+                document.getElementById('instDate').valueAsDate = new Date();
+            } catch(e) {
+                this.showToast('Error', 'Gagal memuat data dari database.', 'error');
+            } finally {
+                this.showLoading(false);
+            }
+        },
+
+        renderDashboard: function(data) {
+            document.getElementById('dashBalance').innerText = this.formatRupiah(data.balance);
+            document.getElementById('dashIncome').innerText = this.formatRupiah(data.income);
+            document.getElementById('dashExpense').innerText = this.formatRupiah(data.expense);
+            document.getElementById('dashDebt').innerText = this.formatRupiah(data.debt);
+            document.getElementById('dashReceivable').innerText = this.formatRupiah(data.receivable);
+            document.getElementById('dashTotalInstallmentOutstanding').innerText = 'Total Sisa: ' + this.formatRupiah(data.installmentOutstanding);
+        },
+
+        renderCreditorWidget: function() {
+            const container = document.getElementById('creditorWidgetList');
+            container.innerHTML = '';
+            const creditorMap = {};
+            this.installments.forEach(inst => {
+                if (inst.status !== 'Lunas') {
+                    const cred = inst.creditor || 'Lainnya';
+                    if (!creditorMap[cred]) creditorMap[cred] = 0;
+                    creditorMap[cred] += inst.remaining;
+                }
+            });
+            const creditors = Object.keys(creditorMap).sort((a, b) => creditorMap[b] - creditorMap[a]);
+            if (creditors.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center text-gray-400 text-sm py-4">Tidak ada tagihan cicilan aktif.</div>';
+                return;
+            }
+            creditors.forEach(cred => {
+                const div = document.createElement('div');
+                div.className = "bg-gray-50 hover:bg-accent-light border border-gray-100 p-3 rounded-lg cursor-pointer transition flex flex-col";
+                div.onclick = () => {
+                    this.switchView('installments');
+                    const filter = document.getElementById('creditorFilter');
+                    if (filter.querySelector(`option[value="${cred}"]`)) filter.value = cred;
+                    this.filterByCreditor();
+                };
+                div.innerHTML = `<span class="text-xs text-gray-500 font-medium truncate" title="${cred}">${cred}</span><span class="text-sm font-bold text-gray-800 mt-1">${this.formatRupiah(creditorMap[cred])}</span>`;
+                container.appendChild(div);
+            });
+        },
+
+        renderTransactions: function() {
+            const tbody = document.getElementById('trxTableBody');
+            tbody.innerHTML = '';
+            if (this.transactions.length === 0) {
+                document.getElementById('trxEmpty').classList.remove('hidden');
+            } else {
+                document.getElementById('trxEmpty').classList.add('hidden');
+                this.transactions.forEach(trx => {
+                    let typeColor = 'text-gray-600 bg-gray-100';
+                    if (trx.type === 'Pendapatan' || trx.type === 'Piutang') typeColor = 'text-green-700 bg-green-100';
+                    else if (trx.type === 'Pengeluaran' || trx.type === 'Cicilan') typeColor = 'text-red-700 bg-red-100';
+                    else if (trx.type === 'Utang') typeColor = 'text-orange-700 bg-orange-100';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td class="px-4 py-3">${this.formatDate(trx.date)}</td><td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium ${typeColor}">${trx.type}</span></td><td class="px-4 py-3 font-medium">${trx.category}</td><td class="px-4 py-3 text-gray-500 max-w-[150px] truncate" title="${trx.description}">${trx.description || '-'}</td><td class="px-4 py-3 text-right font-bold">${this.formatRupiah(trx.amount)}</td><td class="px-4 py-3 text-center"><button onclick="App.deleteTransaction('${trx.id}')" class="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded-lg"><i class="bi bi-trash"></i></button></td>`;
+                    tbody.appendChild(tr);
+                });
+            }
+        },
+
+        handleTrxTypeChange: function() {
+            const type = document.getElementById('trxType').value;
+            const catWrap = document.getElementById('trxCategoryWrapper');
+            const instWrap = document.getElementById('trxInstallmentWrapper');
+            const catInput = document.getElementById('trxCategory');
+            if (type === 'Cicilan') {
+                catWrap.classList.add('hidden');
+                instWrap.classList.remove('hidden');
+                catInput.removeAttribute('required');
+                const select = document.getElementById('trxInstallmentId');
+                select.innerHTML = '<option value="">-- Pilih Cicilan Aktif --</option>';
+                this.installments.filter(i => i.status !== 'Lunas').forEach(i => {
+                    select.innerHTML += `<option value="${i.id}">${i.name} (${i.creditor}) - Sisa: ${this.formatRupiah(i.remaining)}</option>`;
+                });
+            } else {
+                catWrap.classList.remove('hidden');
+                instWrap.classList.add('hidden');
+                catInput.setAttribute('required', 'true');
+            }
+        },
+
+        submitTransaction: async function() {
+            const type = document.getElementById('trxType').value;
+            const data = {
+                date: document.getElementById('trxDate').value,
+                type: type,
+                category: type === 'Cicilan' ? 'Pembayaran Cicilan' : document.getElementById('trxCategory').value,
+                amount: parseFloat(document.getElementById('trxAmount').value),
+                description: document.getElementById('trxDesc').value,
+                installment_id: type === 'Cicilan' ? document.getElementById('trxInstallmentId').value : null
+            };
+            if (type === 'Cicilan' && !data.installment_id) {
+                this.showToast('Peringatan', 'Silakan pilih cicilan yang akan dibayar.', 'error');
+                return;
+            }
+            document.getElementById('spinTrx').classList.remove('hidden');
+            document.getElementById('btnSubmitTrx').disabled = true;
+            try {
+                const res = await this.api('addTransaction', data);
+                if (res.success) {
+                    this.showToast('Sukses', 'Transaksi berhasil ditambahkan.');
+                    this.closeModal('modal-add-trx');
+                    this.refreshData();
+                } else throw new Error(res.message);
+            } catch(e) {
+                this.showToast('Gagal', e.message, 'error');
+            } finally {
+                document.getElementById('spinTrx').classList.add('hidden');
+                document.getElementById('btnSubmitTrx').disabled = false;
+            }
+        },
+
+        deleteTransaction: function(id) {
+            this.openConfirm('Hapus Transaksi', 'Apakah Anda yakin ingin menghapus data ini?', async () => {
+                this.closeConfirm();
+                this.showLoading(true);
+                try {
+                    const res = await this.api('deleteTransaction', id);
+                    if (res.success) { this.showToast('Sukses', 'Transaksi dihapus.'); this.refreshData(); }
+                    else throw new Error(res.message);
+                } catch(e) { this.showToast('Gagal', e.message, 'error'); }
+                finally { this.showLoading(false); }
+            });
+        },
+
+        populateCreditorFilter: function() {
+            const filterSelect = document.getElementById('creditorFilter');
+            const datalist = document.getElementById('existingCreditors');
+            const currentSelected = filterSelect.value;
+            const creditors = [...new Set(this.installments.map(inst => inst.creditor).filter(Boolean))];
+            filterSelect.innerHTML = '<option value="all">-- Semua Kreditur --</option>';
+            if (datalist) datalist.innerHTML = '';
+            creditors.forEach(cred => {
+                const opt = document.createElement('option');
+                opt.value = cred; opt.textContent = cred;
+                filterSelect.appendChild(opt);
+                if (datalist) { const dlOpt = document.createElement('option'); dlOpt.value = cred; datalist.appendChild(dlOpt); }
+            });
+            filterSelect.value = creditors.includes(currentSelected) ? currentSelected : 'all';
+        },
+
+        filterByCreditor: function() {
+            const selected = document.getElementById('creditorFilter').value;
+            const filtered = selected === 'all' ? this.installments : this.installments.filter(i => i.creditor === selected);
+            let sumTotal = 0, sumPaid = 0, sumRemaining = 0;
+            filtered.forEach(i => { sumTotal += i.total_amount; sumPaid += i.paid_amount; sumRemaining += i.remaining; });
+            document.getElementById('recapTotalAmount').innerText = this.formatRupiah(sumTotal);
+            document.getElementById('recapPaidAmount').innerText = this.formatRupiah(sumPaid);
+            document.getElementById('recapRemaining').innerText = this.formatRupiah(sumRemaining);
+            this.renderInstallments(filtered);
+        },
+
+        renderInstallments: function(dataList) {
+            const tbody = document.getElementById('instTableBody');
+            tbody.innerHTML = '';
+            if (dataList.length === 0) {
+                document.getElementById('instEmpty').classList.remove('hidden');
+            } else {
+                document.getElementById('instEmpty').classList.add('hidden');
+                dataList.forEach(inst => {
+                    const isLunas = inst.status === 'Lunas';
+                    const statusBadge = isLunas
+                        ? `<span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium"><i class="bi bi-check-circle"></i> Lunas</span>`
+                        : `<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-medium"><i class="bi bi-clock"></i> Berjalan</span>`;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td class="px-4 py-3"><div class="font-bold">${inst.name}</div><div class="text-xs text-gray-400">Mulai: ${this.formatDate(inst.start_date)}</div></td><td class="px-4 py-3 font-medium text-gray-700">${inst.creditor}</td><td class="px-4 py-3 text-right"><div class="font-bold">${this.formatRupiah(inst.total_amount)}</div><div class="text-xs text-green-500">Dibayar: ${this.formatRupiah(inst.paid_amount)}</div></td><td class="px-4 py-3 text-right font-bold text-red-500">${this.formatRupiah(inst.remaining)}</td><td class="px-4 py-3 text-center">${statusBadge}</td><td class="px-4 py-3 text-center"><button onclick="App.deleteInstallment('${inst.id}')" class="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded-lg"><i class="bi bi-trash"></i></button></td>`;
+                    tbody.appendChild(tr);
+                });
+            }
+        },
+
+        submitInstallment: async function() {
+            const data = {
+                name: document.getElementById('instName').value,
+                creditor: document.getElementById('instCreditor').value,
+                total_amount: parseFloat(document.getElementById('instTotal').value),
+                start_date: document.getElementById('instDate').value,
+                description: document.getElementById('instDesc').value
+            };
+            document.getElementById('spinInst').classList.remove('hidden');
+            document.getElementById('btnSubmitInst').disabled = true;
+            try {
+                const res = await this.api('addInstallment', data);
+                if (res.success) {
+                    this.showToast('Sukses', 'Cicilan baru berhasil ditambahkan.');
+                    this.closeModal('modal-add-inst');
+                    this.refreshData();
+                } else throw new Error(res.message);
+            } catch(e) { this.showToast('Gagal', e.message, 'error'); }
+            finally {
+                document.getElementById('spinInst').classList.add('hidden');
+                document.getElementById('btnSubmitInst').disabled = false;
+            }
+        },
+
+        deleteInstallment: function(id) {
+            this.openConfirm('Hapus Cicilan', 'Yakin ingin menghapus cicilan ini? Riwayat bayar di transaksi tidak akan terhapus otomatis.', async () => {
+                this.closeConfirm();
+                this.showLoading(true);
+                try {
+                    const res = await this.api('deleteInstallment', id);
+                    if (res.success) { this.showToast('Sukses', 'Data cicilan dihapus.'); this.refreshData(); }
+                    else throw new Error(res.message);
+                } catch(e) { this.showToast('Gagal', e.message, 'error'); }
+                finally { this.showLoading(false); }
+            });
+        },
+
+        applyAccent: function(colorName) {
+            const colors = {
+                blue:   { main: '#2563eb', hover: '#1d4ed8', light: 'rgba(37,99,235,0.1)' },
+                orange: { main: '#f97316', hover: '#ea580c', light: 'rgba(249,115,22,0.1)' },
+                green:  { main: '#10b981', hover: '#059669', light: 'rgba(16,185,129,0.1)' },
+                purple: { main: '#8b5cf6', hover: '#7c3aed', light: 'rgba(139,92,246,0.1)' },
+                red:    { main: '#ef4444', hover: '#dc2626', light: 'rgba(239,68,68,0.1)' }
+            };
+            const sel = colors[colorName] || colors.blue;
+            document.documentElement.style.setProperty('--primary-color', sel.main);
+            document.documentElement.style.setProperty('--primary-hover', sel.hover);
+            document.documentElement.style.setProperty('--primary-light', sel.light);
+            // Update meta theme-color
+            document.getElementById('metaThemeColor').setAttribute('content', sel.main);
+            document.querySelectorAll('[id^="accent-"]').forEach(btn => {
+                btn.classList.remove('border-gray-800', 'scale-110');
+                btn.classList.add('border-transparent');
+            });
+            const activeBtn = document.getElementById(`accent-${colorName}-btn`);
+            if (activeBtn) { activeBtn.classList.remove('border-transparent'); activeBtn.classList.add('border-gray-800', 'scale-110'); }
+            localStorage.setItem('fulusku_accent', colorName);
+        },
+
+        setTheme: function(mode) {
+            const body = document.body;
+            const lightBtn = document.getElementById('theme-light-btn');
+            const darkBtn = document.getElementById('theme-dark-btn');
+            if (mode === 'dark') {
+                body.classList.add('dark');
+                darkBtn.classList.add('bg-accent', 'text-white', 'border-transparent');
+                lightBtn.classList.remove('bg-accent', 'text-white', 'border-transparent');
+                lightBtn.classList.add('border-gray-200');
+                document.getElementById('metaThemeColor').setAttribute('content', '#0f172a');
+            } else {
+                body.classList.remove('dark');
+                lightBtn.classList.add('bg-accent', 'text-white', 'border-transparent');
+                darkBtn.classList.remove('bg-accent', 'text-white', 'border-transparent');
+                darkBtn.classList.add('border-gray-200');
+            }
+            localStorage.setItem('fulusku_theme', mode);
+        },
+
+        loadPreferences: function() {
+            this.applyAccent(localStorage.getItem('fulusku_accent') || 'blue');
+            this.setTheme(localStorage.getItem('fulusku_theme') || 'light');
+            
+            // Muat konfigurasi koneksi
+            const spreadsheetId = localStorage.getItem('fulusku_spreadsheet_id') || '1aRClSDk_R5_JJiJgS3FAISljUOI3ZACKgJr5R19ckQM';
+            const apiUrl = localStorage.getItem('fulusku_api_url') || '';
+            
+            const spInput = document.getElementById('dbSpreadsheetId');
+            const apiInput = document.getElementById('dbApiUrl');
+            if (spInput) spInput.value = spreadsheetId;
+            if (apiInput) apiInput.value = apiUrl;
+        },
+
+        saveConnectionSettings: function() {
+            const spreadsheetId = document.getElementById('dbSpreadsheetId').value.trim();
+            const apiUrl = document.getElementById('dbApiUrl').value.trim();
+            
+            localStorage.setItem('fulusku_spreadsheet_id', spreadsheetId || '1aRClSDk_R5_JJiJgS3FAISljUOI3ZACKgJr5R19ckQM');
+            localStorage.setItem('fulusku_api_url', apiUrl);
+            
+            this.showToast('Sukses', 'Konfigurasi database berhasil disimpan.');
+            
+            if (this.user) {
+                this.refreshData();
+            }
+        },
+
+        initSession: function() {
+            const savedUser = localStorage.getItem('fulusku_user');
+            if (savedUser) {
+                try {
+                    this.user = JSON.parse(savedUser);
+                    document.getElementById('userNameDisplay').innerText = this.user.username;
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('loginScreen').classList.remove('active-screen');
+                    document.getElementById('loginScreen').classList.add('hidden-screen');
+                    document.getElementById('mainApp').classList.remove('hidden-screen');
+                    document.getElementById('mainApp').classList.add('active-screen');
+                    this.refreshData();
+                } catch(e) {
+                    localStorage.removeItem('fulusku_user');
+                }
+            }
+        }
+    };
+
+    // ════ INIT ════
+    window.onload = function() {
+        document.getElementById('trxDate').valueAsDate = new Date();
+        document.getElementById('instDate').valueAsDate = new Date();
+        App.loadPreferences();
+        App.initSession(); // Pulihkan sesi login otomatis jika ada
+        App.switchView('dashboard');
+
+        // Handle deep-link shortcut dari manifest
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        if (action === 'dashboard') App.switchView('dashboard');
+
+        // Init PWA
+        PWA.init();
+    };
+    </script>
+</body>
+</html>
