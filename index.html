@@ -305,6 +305,13 @@
         <i class="bi bi-wifi-off"></i> Tidak ada koneksi internet
     </div>
 
+    <!-- ════ PENDING SYNC BADGE ════ -->
+    <div id="pending-sync-badge-container" style="position: fixed; top: 10px; right: 10px; z-index: 50;">
+        <div id="pending-sync-badge" style="display: none; background: #f59e0b; color: white; border-radius: 20px; padding: 4px 10px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+            0
+        </div>
+    </div>
+
     <!-- LOGIN SCREEN -->
     <div id="loginScreen" class="active-screen transition-all-smooth min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center relative">
@@ -1038,6 +1045,8 @@
             // Online / Offline detection
             window.addEventListener('online', () => {
                 document.getElementById('offline-badge').classList.remove('show');
+                // Sync offline queue saat kembali online
+                App.syncOfflineQueue();
             });
             window.addEventListener('offline', () => {
                 document.getElementById('offline-badge').classList.add('show');
@@ -1250,12 +1259,77 @@
     };
 
     // ════════════════════════════════════════════════════════
+    //  OFFLINE QUEUE SYSTEM (Simpan & Sync data saat offline)
+    // ════════════════════════════════════════════════════════
+    class OfflineQueue {
+        constructor(dbName = 'fulusku-offline-queue') {
+            this.dbName = dbName;
+            this.db = null;
+            this.isPending = false;
+        }
+
+        async init() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(this.dbName, 1);
+                req.onerror = () => reject(req.error);
+                req.onsuccess = () => {
+                    this.db = req.result;
+                    resolve();
+                };
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('requests')) {
+                        db.createObjectStore('requests', { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+            });
+        }
+
+        async add(functionName, args) {
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction(['requests'], 'readwrite');
+                const store = tx.objectStore('requests');
+                const item = { functionName, args, timestamp: Date.now(), synced: false };
+                const req = store.add(item);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async getAll() {
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction(['requests'], 'readonly');
+                const store = tx.objectStore('requests');
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async remove(id) {
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction(['requests'], 'readwrite');
+                const store = tx.objectStore('requests');
+                const req = store.delete(id);
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async getPendingCount() {
+            const items = await this.getAll();
+            return items.filter(i => !i.synced).length;
+        }
+    }
+
+    // ════════════════════════════════════════════════════════
     //  APP CONTROLLER
     // ════════════════════════════════════════════════════════
     const App = {
         user: null,
         transactions: [],
         installments: [],
+        offlineQueue: new OfflineQueue(),
         
         formatRupiah: function(number) {
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number || 0);
@@ -1306,8 +1380,106 @@
                         return res;
                     }
                     return JSON.parse(res);
+                })
+                .catch(err => {
+                    // OFFLINE QUEUE: Jika offline & operasi simpan/update, queue-nya
+                    if (!navigator.onLine && ['addTransaction', 'updateTransaction', 'addInstallment', 'updateInstallment'].includes(functionName)) {
+                        return this.offlineQueue.add(functionName, args).then(id => {
+                            this.updatePendingBadge();
+                            return {
+                                success: true,
+                                data: null,
+                                message: '📱 Data disimpan lokal. Akan tersinkronisasi otomatis saat online.',
+                                offline: true,
+                                queueId: id
+                            };
+                        }).catch(queueErr => {
+                            throw new Error('Gagal menyimpan data lokal: ' + queueErr.message);
+                        });
+                    }
+                    throw err;
                 });
             }
+        },
+
+        updatePendingBadge: async function() {
+            try {
+                const count = await this.offlineQueue.getPendingCount();
+                const badge = document.getElementById('pending-sync-badge');
+                if (badge) {
+                    if (count > 0) {
+                        badge.textContent = count;
+                        badge.style.display = 'block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            } catch(e) {
+                console.log('Badge update error:', e);
+            }
+        },
+
+        syncOfflineQueue: async function() {
+            if (this.offlineQueue.isPending) return; // Hindari double sync
+            
+            try {
+                this.offlineQueue.isPending = true;
+                const items = await this.offlineQueue.getAll();
+                const unsyncedItems = items.filter(i => !i.synced);
+                
+                if (unsyncedItems.length === 0) {
+                    console.log('Tidak ada item untuk disinkronisasi.');
+                    this.updatePendingBadge();
+                    return;
+                }
+                
+                console.log(`🔄 Mensinkronisasi ${unsyncedItems.length} item offline...`);
+                this.showToast('Sinkronisasi', `Mensinkronisasi ${unsyncedItems.length} item yang tertunda...`);
+                
+                let successCount = 0;
+                for (const item of unsyncedItems) {
+                    try {
+                        const res = await this._apiDirect(item.functionName, ...item.args);
+                        if (res.success) {
+                            await this.offlineQueue.remove(item.id);
+                            successCount++;
+                        }
+                    } catch(e) {
+                        console.log(`Gagal sinkronisasi item ${item.id}:`, e.message);
+                    }
+                }
+                
+                this.showToast('Sukses', `${successCount}/${unsyncedItems.length} item tersinkronisasi.`);
+                if (successCount > 0) {
+                    this.refreshData();
+                }
+                this.updatePendingBadge();
+            } catch(e) {
+                console.error('Sync error:', e);
+                this.showToast('Error', 'Gagal sinkronisasi: ' + e.message, 'error');
+            } finally {
+                this.offlineQueue.isPending = false;
+            }
+        },
+
+        _apiDirect: function(functionName, ...args) {
+            const spreadsheetId = localStorage.getItem('fulusku_spreadsheet_id') || '1aRClSDk_R5_JJiJgS3FAISljUOI3ZACKgJr5R19ckQM';
+            const apiUrl = localStorage.getItem('fulusku_api_url') || '';
+            
+            if (!apiUrl) {
+                return Promise.reject(new Error('URL API belum dikonfigurasi.'));
+            }
+            
+            return fetch(apiUrl, {
+                method: 'POST',
+                mode: 'cors',
+                body: JSON.stringify({
+                    action: functionName,
+                    arguments: args,
+                    spreadsheetId: spreadsheetId
+                })
+            })
+            .then(response => response.json());
         },
 
         showLoading: function(show) {
@@ -1874,6 +2046,13 @@
         App.loadPreferences();
         App.initSession(); // Pulihkan sesi login otomatis jika ada
         App.switchView('dashboard');
+
+        // Init Offline Queue
+        App.offlineQueue.init().then(() => {
+            App.updatePendingBadge();
+        }).catch(err => {
+            console.warn('Offline queue initialization failed:', err);
+        });
 
         // Handle deep-link shortcut dari manifest
         const urlParams = new URLSearchParams(window.location.search);
