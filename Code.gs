@@ -117,7 +117,7 @@ function setupDatabase() {
     let sheetInst = ss.getSheetByName("INSTALLMENTS");
     if (!sheetInst) {
       sheetInst = ss.insertSheet("INSTALLMENTS");
-      sheetInst.appendRow(["id", "name", "creditor", "total_amount", "paid_amount", "remaining", "start_date", "status", "description", "timestamp"]);
+      sheetInst.appendRow(["id", "name", "creditor", "total_amount", "paid_amount", "remaining", "start_date", "due_date", "status", "description", "timestamp"]);
     }
     
     return createResponse(true, null, "Database berhasil disiapkan.");
@@ -142,7 +142,7 @@ function resetDatabase() {
     const sheetInst = ss.getSheetByName("INSTALLMENTS");
     if (sheetInst) {
       sheetInst.clear();
-      sheetInst.appendRow(["id", "name", "creditor", "total_amount", "paid_amount", "remaining", "start_date", "status", "description", "timestamp"]);
+      sheetInst.appendRow(["id", "name", "creditor", "total_amount", "paid_amount", "remaining", "start_date", "due_date", "status", "description", "timestamp"]);
     }
     
     return createResponse(true, null, "Database transaksi dan cicilan berhasil dikosongkan.");
@@ -210,14 +210,13 @@ function getDashboardData() {
     }
 
     const data = sheet.getDataRange().getValues();
-    let totalIncome = 0, totalExpense = 0, totalDebt = 0, totalReceivable = 0, totalInstallmentPaid = 0;
+    let totalIncome = 0, totalExpense = 0, totalReceivable = 0, totalInstallmentPaid = 0;
 
     for (let i = 1; i < data.length; i++) {
       const type   = String(data[i][2]).trim();
       const amount = parseFloat(data[i][4]) || 0;
       if      (type === "Pendapatan")  totalIncome   += amount;
       else if (type === "Pengeluaran") totalExpense  += amount;
-      else if (type === "Utang")       totalDebt     += amount;
       else if (type === "Piutang")     totalReceivable += amount;
       else if (type === "Cicilan")     totalInstallmentPaid += amount;
     }
@@ -228,18 +227,18 @@ function getDashboardData() {
     if (installSheet) {
       const iData = installSheet.getDataRange().getValues();
       for (let i = 1; i < iData.length; i++) {
-        if (String(iData[i][7]).trim() !== 'Lunas') {
-          totalInstallmentOutstanding += parseFloat(iData[i][5]) || 0; // kolom sisa
+        if (String(iData[i][8]).trim() !== 'Lunas') { // kolom status bergeser dari index 7 ke index 8
+          totalInstallmentOutstanding += parseFloat(iData[i][5]) || 0; // kolom sisa (tetap index 5)
         }
       }
     }
 
-    const balance = (totalIncome + totalDebt) - (totalExpense + totalReceivable + totalInstallmentPaid);
+    const balance = totalIncome - (totalExpense + totalReceivable + totalInstallmentPaid);
 
     return createResponse(true, {
       income:                   totalIncome,
       expense:                  totalExpense + totalInstallmentPaid,
-      debt:                     totalDebt,
+      debt:                     0,
       receivable:               totalReceivable,
       balance:                  balance,
       installmentPaid:          totalInstallmentPaid,
@@ -386,7 +385,7 @@ function updateTransaction(trxData) {
 
 /* ================================================================
    INSTALLMENTS — Cicilan (Total / Setor / Sisa)
-   Sheet kolom: id | name | creditor | total_amount | paid_amount | remaining | start_date | status | description | timestamp
+   Sheet kolom: id | name | creditor | total_amount | paid_amount | remaining | start_date | due_date | status | description | timestamp
    ================================================================ */
 
 function getInstallments() {
@@ -418,6 +417,10 @@ function getInstallments() {
       const rawDate = row[6];
       if (rawDate instanceof Date) item['start_date'] = rawDate.toISOString();
       else item['start_date'] = rawDate ? String(rawDate).trim() : '';
+
+      const rawDueDate = row[7];
+      if (rawDueDate instanceof Date) item['due_date'] = rawDueDate.toISOString();
+      else item['due_date'] = rawDueDate ? String(rawDueDate).trim() : '';
 
       list.push(item);
     }
@@ -451,6 +454,7 @@ function addInstallment(trxData) {
       paid,
       remaining,
       trxData.start_date  || new Date(),
+      trxData.due_date    || '', // due_date
       'Berjalan',          // status
       trxData.description || '',
       new Date()           // timestamp
@@ -484,7 +488,7 @@ function recordInstallmentPayment(installmentId, payAmount) {
 
         sheet.getRange(rowNum, 5).setValue(newPaid);    // paid_amount
         sheet.getRange(rowNum, 6).setValue(remaining);  // remaining
-        sheet.getRange(rowNum, 8).setValue(status);     // status
+        sheet.getRange(rowNum, 9).setValue(status);     // status bergeser dari kolom 8 ke 9
 
         return createResponse(true, { paid: newPaid, remaining: remaining, status: status },
           "Pembayaran cicilan berhasil dicatat.");
@@ -538,15 +542,16 @@ function updateInstallment(trxData) {
         const remaining = Math.max(0, total - paid);
         const status = remaining <= 0 ? 'Lunas' : 'Berjalan';
         
-        // Update: name, creditor, total_amount, paid_amount, remaining, start_date, status, description
+        // Update: name, creditor, total_amount, paid_amount, remaining, start_date, due_date, status, description
         sheet.getRange(rowNum, 2).setValue(trxData.name || '');              // name
         sheet.getRange(rowNum, 3).setValue(trxData.creditor || '');          // creditor
         sheet.getRange(rowNum, 4).setValue(total);                            // total_amount
         sheet.getRange(rowNum, 5).setValue(paid);                             // paid_amount
         sheet.getRange(rowNum, 6).setValue(remaining);                        // remaining
         sheet.getRange(rowNum, 7).setValue(trxData.start_date || new Date()); // start_date
-        sheet.getRange(rowNum, 8).setValue(status);                           // status
-        sheet.getRange(rowNum, 9).setValue(trxData.description || '');       // description
+        sheet.getRange(rowNum, 8).setValue(trxData.due_date || '');          // due_date
+        sheet.getRange(rowNum, 9).setValue(status);                           // status bergeser dari kolom 8 ke 9
+        sheet.getRange(rowNum, 10).setValue(trxData.description || '');       // description bergeser dari kolom 9 ke 10
         
         return createResponse(true, { id: trxData.id, status: status }, "Cicilan berhasil diperbarui.");
       }

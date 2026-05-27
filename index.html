@@ -50,6 +50,29 @@
         @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .toast-animate { animation: slideInRight 0.3s ease-out forwards; }
 
+        /* ════ ENHANCED FORM STYLING ════ */
+        input[type="text"], input[type="date"], input[type="number"], input[type="password"],
+        select, textarea {
+            transition: all 0.2s ease !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        }
+        input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, input[type="password"]:focus,
+        select:focus, textarea:focus {
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        /* ════ ENHANCED CARD STYLING ════ */
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important; transform: translateY(-2px); }
+
+        /* ════ BUTTON ENHANCEMENTS ════ */
+        button { transition: all 0.2s ease; }
+        button:active { transform: scale(0.98); }
+
+        /* ════ TABLE STYLING ════ */
+        table tbody tr { transition: background-color 0.2s ease; }
+        table tbody tr:hover { background-color: rgba(37, 99, 235, 0.03) !important; }
+
         /* ════ DARK MODE ════ */
         body.dark { background-color: #0f172a !important; color: #f1f5f9 !important; }
         body.dark .bg-white { background-color: #1e293b !important; color: #f8fafc !important; }
@@ -250,7 +273,7 @@
         }
         #update-banner button:hover { background: rgba(255,255,255,0.35); }
 
-        /* ════ INSTALLED TOAST ════ */
+        /* ════ BANK TOAST ════ */
         #installed-toast {
             position: fixed;
             bottom: -60px;
@@ -362,7 +385,7 @@
             
             <!-- VIEW: DASHBOARD -->
             <div id="view-dashboard" class="view-section space-y-6">
-                <div class="bg-accent rounded-2xl p-6 text-white shadow-lg relative overflow-hidden" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%)">
+                <div class="bg-accent rounded-2xl p-6 text-white shadow-lg relative overflow-hidden card-hover" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%)">
                     <div class="absolute top-0 right-0 p-4 opacity-20">
                         <i class="bi bi-cash-coin text-8xl"></i>
                     </div>
@@ -373,25 +396,25 @@
                 </div>
 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 card-hover">
                         <div class="flex items-center gap-2 text-green-600 mb-2">
                             <i class="bi bi-arrow-down-circle"></i> <span class="text-xs font-semibold uppercase tracking-wider">Pendapatan</span>
                         </div>
                         <div class="text-lg font-bold text-gray-800" id="dashIncome">Rp 0</div>
                     </div>
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 card-hover">
                         <div class="flex items-center gap-2 text-red-500 mb-2">
                             <i class="bi bi-arrow-up-circle"></i> <span class="text-xs font-semibold uppercase tracking-wider">Pengeluaran</span>
                         </div>
                         <div class="text-lg font-bold text-gray-800" id="dashExpense">Rp 0</div>
                     </div>
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 card-hover">
                         <div class="flex items-center gap-2 text-orange-500 mb-2">
-                            <i class="bi bi-journal-minus"></i> <span class="text-xs font-semibold uppercase tracking-wider">Total Utang</span>
+                            <i class="bi bi-credit-card"></i> <span class="text-xs font-semibold uppercase tracking-wider">Cicilan Aktif</span>
                         </div>
                         <div class="text-lg font-bold text-gray-800" id="dashDebt">Rp 0</div>
                     </div>
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 card-hover">
                         <div class="flex items-center gap-2 text-blue-500 mb-2">
                             <i class="bi bi-journal-plus"></i> <span class="text-xs font-semibold uppercase tracking-wider">Total Piutang</span>
                         </div>
@@ -451,15 +474,15 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 card-hover">
                         <p class="text-blue-600 text-xs font-semibold uppercase mb-1">Total Pinjaman</p>
                         <h4 class="text-lg font-bold text-blue-900" id="recapTotalAmount">Rp 0</h4>
                     </div>
-                    <div class="bg-green-50 p-4 rounded-xl border border-green-100">
+                    <div class="bg-green-50 p-4 rounded-xl border border-green-100 card-hover">
                         <p class="text-green-600 text-xs font-semibold uppercase mb-1">Sudah Dibayar</p>
                         <h4 class="text-lg font-bold text-green-900" id="recapPaidAmount">Rp 0</h4>
                     </div>
-                    <div class="bg-red-50 p-4 rounded-xl border border-red-100">
+                    <div class="bg-red-50 p-4 rounded-xl border border-red-100 card-hover">
                         <p class="text-red-500 text-xs font-semibold uppercase mb-1">Sisa Tagihan</p>
                         <h4 class="text-lg font-bold text-red-900" id="recapRemaining">Rp 0</h4>
                     </div>
@@ -507,7 +530,6 @@
                             <select id="trxType" onchange="App.handleTrxTypeChange()" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent">
                                 <option value="Pendapatan">Pendapatan</option>
                                 <option value="Pengeluaran">Pengeluaran</option>
-                                <option value="Utang">Utang (Menerima)</option>
                                 <option value="Piutang">Piutang (Memberi)</option>
                                 <option value="Cicilan">Bayar Cicilan</option>
                             </select>
@@ -560,9 +582,15 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Total Nilai Pinjaman (Rp)</label>
                         <input type="number" id="instTotal" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" min="1" required>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
-                        <input type="date" id="instDate" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" required>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
+                            <input type="date" id="instDate" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Jatuh Tempo</label>
+                            <input type="date" id="instDueDate" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent">
+                        </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Catatan Tambahan</label>
@@ -696,7 +724,6 @@
                             <select id="editTrxType" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" readonly>
                                 <option value="Pendapatan">Pendapatan</option>
                                 <option value="Pengeluaran">Pengeluaran</option>
-                                <option value="Utang">Utang (Menerima)</option>
                                 <option value="Piutang">Piutang (Memberi)</option>
                                 <option value="Cicilan">Bayar Cicilan</option>
                             </select>
@@ -751,9 +778,15 @@
                             <input type="number" id="editInstPaid" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" min="0" required>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
-                        <input type="date" id="editInstDate" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" required>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
+                            <input type="date" id="editInstDate" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Jatuh Tempo</label>
+                            <input type="date" id="editInstDueDate" class="w-full border-gray-300 rounded-lg p-2 border outline-none focus-ring-accent">
+                        </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Catatan Tambahan</label>
@@ -1217,7 +1250,7 @@
     };
 
     // ════════════════════════════════════════════════════════
-    //  APP CONTROLLER (sama persis dengan versi GAS asli)
+    //  APP CONTROLLER
     // ════════════════════════════════════════════════════════
     const App = {
         user: null,
@@ -1307,7 +1340,10 @@
                 content.classList.add('scale-100', 'opacity-100');
             }, 10);
             if (id === 'modal-add-trx') document.getElementById('trxDate').valueAsDate = new Date();
-            if (id === 'modal-add-inst') document.getElementById('instDate').valueAsDate = new Date();
+            if (id === 'modal-add-inst') {
+                document.getElementById('instDate').valueAsDate = new Date();
+                document.getElementById('instDueDate').value = '';
+            }
         },
 
         closeModal: function(id) {
@@ -1317,7 +1353,11 @@
             content.classList.add('scale-95', 'opacity-0');
             setTimeout(() => modal.classList.add('hidden'), 300);
             if (id === 'modal-add-trx') { document.getElementById('trxForm').reset(); document.getElementById('trxDate').valueAsDate = new Date(); }
-            if (id === 'modal-add-inst') { document.getElementById('instForm').reset(); document.getElementById('instDate').valueAsDate = new Date(); }
+            if (id === 'modal-add-inst') {
+                document.getElementById('instForm').reset();
+                document.getElementById('instDate').valueAsDate = new Date();
+                document.getElementById('instDueDate').value = '';
+            }
         },
 
         openConfirm: function(title, message, onConfirm) {
@@ -1441,6 +1481,7 @@
                 }
                 document.getElementById('trxDate').valueAsDate = new Date();
                 document.getElementById('instDate').valueAsDate = new Date();
+                document.getElementById('instDueDate').value = '';
             } catch(e) {
                 this.showToast('Error', 'Gagal memuat data dari database: ' + e.message, 'error');
             } finally {
@@ -1498,7 +1539,6 @@
                     let typeColor = 'text-gray-600 bg-gray-100';
                     if (trx.type === 'Pendapatan' || trx.type === 'Piutang') typeColor = 'text-green-700 bg-green-100';
                     else if (trx.type === 'Pengeluaran' || trx.type === 'Cicilan') typeColor = 'text-red-700 bg-red-100';
-                    else if (trx.type === 'Utang') typeColor = 'text-orange-700 bg-orange-100';
                     const tr = document.createElement('tr');
                     tr.innerHTML = `<td class="px-4 py-3">${this.formatDate(trx.date)}</td><td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium ${typeColor}">${trx.type}</span></td><td class="px-4 py-3 font-medium">${trx.category}</td><td class="px-4 py-3 text-gray-500 max-w-[150px] truncate" title="${trx.description}">${trx.description || '-'}</td><td class="px-4 py-3 text-right font-bold">${this.formatRupiah(trx.amount)}</td><td class="px-4 py-3 text-center flex gap-1 justify-center"><button onclick="App.editTransaction('${trx.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded-lg" title="Edit"><i class="bi bi-pencil"></i></button><button onclick="App.deleteTransaction('${trx.id}')" class="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded-lg" title="Hapus"><i class="bi bi-trash"></i></button></td>`;
                     tbody.appendChild(tr);
@@ -1649,8 +1689,9 @@
                     const statusBadge = isLunas
                         ? `<span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium"><i class="bi bi-check-circle"></i> Lunas</span>`
                         : `<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-medium"><i class="bi bi-clock"></i> Berjalan</span>`;
+                    const dueText = inst.due_date ? `<div class="text-xs text-red-500 font-semibold mt-0.5"><i class="bi bi-calendar-event"></i> Jatuh Tempo: ${this.formatDate(inst.due_date)}</div>` : '';
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td class="px-4 py-3"><div class="font-bold">${inst.name}</div><div class="text-xs text-gray-400">Mulai: ${this.formatDate(inst.start_date)}</div></td><td class="px-4 py-3 font-medium text-gray-700">${inst.creditor}</td><td class="px-4 py-3 text-right"><div class="font-bold">${this.formatRupiah(inst.total_amount)}</div><div class="text-xs text-green-500">Dibayar: ${this.formatRupiah(inst.paid_amount)}</div></td><td class="px-4 py-3 text-right font-bold text-red-500">${this.formatRupiah(inst.remaining)}</td><td class="px-4 py-3 text-center">${statusBadge}</td><td class="px-4 py-3 text-center flex gap-1 justify-center"><button onclick="App.editInstallment('${inst.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded-lg" title="Edit"><i class="bi bi-pencil"></i></button><button onclick="App.deleteInstallment('${inst.id}')" class="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded-lg" title="Hapus"><i class="bi bi-trash"></i></button></td>`;
+                    tr.innerHTML = `<td class="px-4 py-3"><div class="font-bold">${inst.name}</div><div class="text-xs text-gray-400">Mulai: ${this.formatDate(inst.start_date)}</div>${dueText}</td><td class="px-4 py-3 font-medium text-gray-700">${inst.creditor}</td><td class="px-4 py-3 text-right"><div class="font-bold">${this.formatRupiah(inst.total_amount)}</div><div class="text-xs text-green-500">Dibayar: ${this.formatRupiah(inst.paid_amount)}</div></td><td class="px-4 py-3 text-right font-bold text-red-500">${this.formatRupiah(inst.remaining)}</td><td class="px-4 py-3 text-center">${statusBadge}</td><td class="px-4 py-3 text-center flex gap-1 justify-center"><button onclick="App.editInstallment('${inst.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded-lg" title="Edit"><i class="bi bi-pencil"></i></button><button onclick="App.deleteInstallment('${inst.id}')" class="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded-lg" title="Hapus"><i class="bi bi-trash"></i></button></td>`;
                     tbody.appendChild(tr);
                 });
             }
@@ -1662,6 +1703,7 @@
                 creditor: document.getElementById('instCreditor').value,
                 total_amount: parseFloat(document.getElementById('instTotal').value),
                 start_date: document.getElementById('instDate').value,
+                due_date: document.getElementById('instDueDate').value,
                 description: document.getElementById('instDesc').value
             };
             document.getElementById('spinInst').classList.remove('hidden');
@@ -1702,6 +1744,7 @@
             document.getElementById('editInstTotal').value = inst.total_amount;
             document.getElementById('editInstPaid').value = inst.paid_amount;
             document.getElementById('editInstDate').value = inst.start_date ? inst.start_date.split('T')[0] : '';
+            document.getElementById('editInstDueDate').value = inst.due_date ? inst.due_date.split('T')[0] : '';
             document.getElementById('editInstDesc').value = inst.description || '';
             this.openModal('modal-edit-inst');
         },
@@ -1714,6 +1757,7 @@
                 total_amount: parseFloat(document.getElementById('editInstTotal').value),
                 paid_amount: parseFloat(document.getElementById('editInstPaid').value),
                 start_date: document.getElementById('editInstDate').value,
+                due_date: document.getElementById('editInstDueDate').value,
                 description: document.getElementById('editInstDesc').value
             };
             document.getElementById('spinEditInst').classList.remove('hidden');
@@ -1826,6 +1870,7 @@
     window.onload = function() {
         document.getElementById('trxDate').valueAsDate = new Date();
         document.getElementById('instDate').valueAsDate = new Date();
+        document.getElementById('instDueDate').value = '';
         App.loadPreferences();
         App.initSession(); // Pulihkan sesi login otomatis jika ada
         App.switchView('dashboard');
